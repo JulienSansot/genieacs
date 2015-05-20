@@ -51,6 +51,7 @@ customCommands = require './custom-commands'
 crypto = require 'crypto'
 zlib = require 'zlib'
 updateDevice = require './update-device'
+pub = require './pub'
 
 
 # Used to reject new TR-069 sessions when under load
@@ -116,6 +117,7 @@ inform = (currentRequest, cwmpRequest) ->
     lastBootstrap = now
     db.tasksCollection.remove({device : currentRequest.session.deviceId}, (err, removed) ->
       throw err if err
+      pub.emit('tasks:remove', {device : t.device, uniqueKey : t.uniqueKey})
     )
 
   db.redisClient.get("#{currentRequest.session.deviceId}_inform_hash", (err, oldInformHash) ->
@@ -253,6 +255,7 @@ runTask = (currentRequest, task, methodResponse) ->
             throw err if err
             db.tasksCollection.update({_id : mongodb.ObjectID(String(task._id))}, {$set : {session : task.session}}, (err) ->
               throw err if err
+              pub.emit('tasks:update', {_id : mongodb.ObjectID(String(task._id))}, {$set : {session : task.session}})
               f()
             )
           )
@@ -266,6 +269,7 @@ runTask = (currentRequest, task, methodResponse) ->
           throw err if err
           db.tasksCollection.remove({'_id' : mongodb.ObjectID(String(task._id))}, (err, removed) ->
             throw err if err
+            pub.emit('tasks:remove', {'_id' : mongodb.ObjectID(String(task._id))})
             db.redisClient.del(String(task._id), (err, res) ->
               throw err if err
               nextTask(currentRequest)
@@ -281,6 +285,7 @@ runTask = (currentRequest, task, methodResponse) ->
 
         db.tasksCollection.update({_id : mongodb.ObjectID(String(task._id))}, {$set : taskUpdate, $inc : {retries : 1}}, (err) ->
           throw err if err
+          pub.emit('tasks:update', {_id : mongodb.ObjectID(String(task._id))}, {$set : taskUpdate, $inc : {retries : 1}})
           nextTask(currentRequest)
         )
       else
@@ -360,6 +365,7 @@ nextTask = (currentRequest) ->
       util.log("#{currentRequest.session.deviceId}: Task is expired #{task.name}(#{task._id})")
       db.tasksCollection.remove({'_id' : mongodb.ObjectID(String(task._id))}, {safe: true}, (err, removed) ->
         throw err if err
+        pub.emit('tasks:remove', {'_id' : mongodb.ObjectID(String(task._id))})
         nextTask(currentRequest)
       )
     else

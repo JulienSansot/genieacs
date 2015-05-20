@@ -47,6 +47,7 @@ querystring = require 'querystring'
 query = require './query'
 apiFunctions = require './api-functions'
 presets = require './presets'
+pub = require './pub'
 
 # regular expression objects
 DEVICE_TASKS_REGEX = /^\/devices\/([a-zA-Z0-9\-\_\%]+)\/tasks\/?$/
@@ -252,6 +253,7 @@ listener = (request, response) ->
               response.writeHead(500)
               response.end(err)
               return
+            pub.emit('tasks:remove', {'_id' : taskId})
             response.writeHead(200)
             response.end()
           )
@@ -262,6 +264,7 @@ listener = (request, response) ->
         if request.method == 'POST'
           db.tasksCollection.update({_id : taskId}, {$unset : {fault : 1}, $set : {timestamp : new Date()}}, (err, count) ->
             # TODO need to invalidate presets hash for the device
+            pub.emit('tasks:update', {_id : taskId}, {$unset : {fault : 1}, $set : {timestamp : new Date()}})
             response.writeHead(200)
             response.end()
           )

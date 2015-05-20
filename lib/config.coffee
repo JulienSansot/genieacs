@@ -24,6 +24,8 @@ options = {
   REDIS_PORT : {type : 'int', default : 6379},
   REDIS_HOST : {type : 'string', default : '127.0.0.1'},
   REDIS_DB : {type : 'int', default : 0},
+  REDIS_PUBSUB : {type : 'bool', default : true},
+  REDIS_PUBSUB_SCOPE : {type : 'string', default : 'pubsub_tr069'},
 
   CWMP_WORKER_PROCESSES : {type : 'int', default : 4},
   CWMP_PORT : {type : 'int', default : 7547},

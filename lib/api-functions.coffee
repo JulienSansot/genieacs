@@ -45,6 +45,7 @@ common = require './common'
 util = require 'util'
 URL = require 'url'
 auth = require './auth'
+pub = require './pub'
 
 
 connectionRequest = (deviceId, callback) ->
@@ -219,12 +220,14 @@ insertTasks = (tasks, aliases, callback) ->
     sanitizeTask(task, aliases, (t) ->
       if t.uniqueKey?
         db.tasksCollection.remove({device : t.device, uniqueKey : t.uniqueKey}, (err, removed) ->
+          pub.emit('tasks:remove', {device : t.device, uniqueKey : t.uniqueKey})
         )
 
       --counter
       if counter == 0
         db.tasksCollection.insert(tasks, (err, _tasks) ->
           #util.log("#{_task.device}: Added task #{_task.name}(#{_task._id})") for _task in _tasks
+          pub.emit('tasks:inserts', tasks)
           callback(err, _tasks)
         )
     )
@@ -233,6 +236,7 @@ insertTasks = (tasks, aliases, callback) ->
 deleteDevice = (deviceId, callback) ->
   db.tasksCollection.remove({'device' : deviceId}, (err, removed) ->
     return callback(err) if err
+    pub.emit('tasks:remove', {'device' : deviceId})
     db.devicesCollection.remove({'_id' : deviceId}, (err, removed) ->
       return callback(err) if err
       db.redisClient.del("#{deviceId}_presets_hash", "#{deviceId}_inform_hash", (err) ->
