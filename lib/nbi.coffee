@@ -253,7 +253,7 @@ listener = (request, response) ->
               response.writeHead(500)
               response.end(err)
               return
-            pub.emit('tasks:remove', {'_id' : taskId})
+            pub.emit('tasks_remove', {'_id' : taskId})
             response.writeHead(200)
             response.end()
           )
@@ -264,7 +264,7 @@ listener = (request, response) ->
         if request.method == 'POST'
           db.tasksCollection.update({_id : taskId}, {$unset : {fault : 1}, $set : {timestamp : new Date()}}, (err, count) ->
             # TODO need to invalidate presets hash for the device
-            pub.emit('tasks:update', {_id : taskId}, {$unset : {fault : 1}, $set : {timestamp : new Date()}})
+            pub.emit('tasks_update', {_id : taskId}, {$unset : {fault : 1}, $set : {timestamp : new Date()}})
             response.writeHead(200)
             response.end()
           )
