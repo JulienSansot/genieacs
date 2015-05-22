@@ -117,7 +117,7 @@ inform = (currentRequest, cwmpRequest) ->
     lastBootstrap = now
     db.tasksCollection.remove({device : currentRequest.session.deviceId}, (err, removed) ->
       throw err if err
-      pub.emit('tasks_remove', {device : t.device, uniqueKey : t.uniqueKey})
+      pub.emit('tasks_remove', {device : currentRequest.session.deviceId})
     )
 
   db.redisClient.get("#{currentRequest.session.deviceId}_inform_hash", (err, oldInformHash) ->
